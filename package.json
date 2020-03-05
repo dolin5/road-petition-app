@@ -1,23 +1,23 @@
 {
   "name": "demo",
   "version": "1.0.0",
-  "description": "Demo application using TypeScript with ArcGIS API 4 for JavaScript",
+  "description": "Road petition lookup app",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Esri/jsapi-resources.git"
+    "url": "git+https://github.com/dolin5/road-petition-app"
   },
   "scripts": {
     "dev": "tsc -w",
-    "lint": "tslint './app/*.ts'"
+    "lint": "tslint --fix './app/*.ts'"
   },
   "keywords": [
     "esri",
     "typescript"
   ],
-  "author": "Rene Rubalcava <rrubalcava@esri.com>",
+  "author": "Dylan Olin",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/Esri/jsapi-resources/issues"
+    "url": "https://github.com/dolin5/road-petition-app/issues"
   },
   "homepage": "https://developers.arcgis.com/javascript/latest/guide/typescript-setup/index.html",
   "dependencies": {},
