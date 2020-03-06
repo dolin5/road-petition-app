@@ -2,8 +2,14 @@ import esri = __esri;
 import {view} from "../main";
 import PopupTemplate from "esri/PopupTemplate";
 import QueryTask from "esri/tasks/QueryTask";
+import Query from "esri/tasks/support/Query";
 import * as promiseUtils from "esri/core/promiseUtils";
 import esriRequest from "esri/request";
+
+interface Table {
+  id:number;
+  name:string;
+}
 
 interface Section {
   s:number;
@@ -69,7 +75,8 @@ let currentRoadNameList:esri.Graphic[];
 let legalDescriptionList :esri.Graphic[];
 let originalRoadNameList :esri.Graphic[];
 let roadPetitionList:esri.Graphic[];
-let petitions:{number:Petition} = {};
+let petitions:{number?:Petition} = {};
+let highlightGraphic:esri.Graphic;
 
 export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
   gcLayer?.sublayers?.forEach(async (sublayer: esri.Sublayer) => {
@@ -89,7 +96,7 @@ export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
 }
 
 function queryTables(gcServiceData:esri.RequestResponse){
-  promiseUtils.eachAlways( gcServiceData.data.tables.map(t => {
+  promiseUtils.eachAlways( gcServiceData.data.tables.map((t:Table) => {
     return promiseUtils.create(async(res,rej)=>{
       const qt = new QueryTask({
         url:gcServiceData.url+"/"+t.id
@@ -103,7 +110,7 @@ function queryTables(gcServiceData:esri.RequestResponse){
   })).then(populateTableArrays)
 }
 
-function populateTableArrays(tableResults:esri.EachAlwaysResult){
+function populateTableArrays(tableResults:esri.EachAlwaysResult[]){
   tableResults.forEach(response => {
     const tr = response.value;
     switch (tr.table.name) {
@@ -143,7 +150,7 @@ function createPetitions(){
         roadNames.push(roadName);
       }
       return roadNames;    
-    },[])
+    },[]).sort()
     petition.originalRoadNames = originalRoadNameList.reduce((roadNames:string[],rN:esri.Graphic)=>{
       if (rN.attributes.Petition_Number == petition.petitionNumber){
         let roadName:string = rN.attributes["Original_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
@@ -151,7 +158,7 @@ function createPetitions(){
         roadNames.push(roadName);
       }
       return roadNames;    
-    },[])
+    },[]).sort()
   
     petition.legalDescriptions = legalDescriptionList.reduce((sections:Section[],lD:esri.Graphic)=>{
       if (lD.attributes.Petition_Number == petition.petitionNumber){
@@ -163,18 +170,37 @@ function createPetitions(){
         sections.push(section);
       }
       return sections;    
-    },[])
+    },[]).sort((a,b)=>{
+      if (a.t != b.t){
+        return (a.t<b.t)?-1:1
+      }        
+      else if (a.r != a.r){
+        return (a.r<b.r)?-1:1
+      }
+      else if (a.s != b.s){
+        return (a.s<b.s)?-1:1
+      }
+      return 0;
+    })
 
     petition.commissionMinutes = commissionMinutesList.reduce((minutes:CommissionMinutes[],cM:esri.Graphic)=>{
       if (cM.attributes.Petition_Number == petition.petitionNumber){
         let minute:CommissionMinutes = {
-          book:cM.attributes.Book;
+          book:cM.attributes.Book,
           page:cM.attributes.Page
         };
         minutes.push(minute);
       }
       return minutes;    
-    },[])
+    },[]).sort((a,b)=>{
+      if (a.book != b.book){
+        return (a.book<b.book)?-1:1
+      }        
+      else if (a.page != a.page){
+        return (a.page<b.page)?-1:1
+      }
+      return 0;
+    })
     petitions[petition.petitionNumber]= petition;
   });
 };
@@ -191,12 +217,13 @@ export async function populatePopup(popup:esri.Popup,mapPoint:esri.Point){
   popup.open({
     title:"loading..."
   });
-  const popupContent = await queryRoadPetitions(mapPoint)//.then(makePopupContent);
+  const popupContent = await queryRoadPetitions(mapPoint).then(makePopupContent);
   popup.content = popupContent;
 }
 
+
 async function queryRoadPetitions(mapPoint:esri.Point){
-  let query = {
+  let query = new Query({
     //query object
     geometry: mapPoint,
     units:"meters",
@@ -204,37 +231,144 @@ async function queryRoadPetitions(mapPoint:esri.Point){
     spatialRelationship:"intersects",
     returnGeometry: true,
     outFields: ["*"],
-  }
-  return await promiseUtils.eachAlways([roadsFL.queryFeatures(query),sectionsFL.queryFeatures(query)]).then(results=>{
-    const roadResults = results[0].value;
-    const sectionResults = results[1].value;
+  })
+  return await promiseUtils.eachAlways([roadsFL.queryFeatures(query),sectionsFL.queryFeatures(query)]).then((results:esri.EachAlwaysResult)=>{
+    const roadResults = results[0].value.features;
+    const sectionResults = results[1].value.features;
     let petitionsByRoadName:esri.Graphic[] = [];
     let petitionsBySection:esri.Graphic[] = []
-    if (roadResults.features.length){
-      petitionsByRoadName = getPetitionsByRoadName(roadResults.features);
+    if (roadResults.length){
+      petitionsByRoadName = getPetitionsByRoadName(roadResults);
     }
-    if (sectionResults.features.length){
-      petitionsBySection = getPetitionsBySection(sectionResults.features);
+    if (sectionResults.length){
+      petitionsBySection = getPetitionsBySection(sectionResults);
     }
-    let petitionResults = []
-    petitionsBySection.forEach(sP=>{
-
-
-      petitionsByRoadName.forEach(rNP=>{
-
-        if (rNP.attributes["Petition_Number"]===sP.attributes["Petition_Number"]){
-          petitionResults.push(petitions[rNP.attributes.Petition_Number]);
-        }
+    let petitionResults:Petition[] = [];
+    if (roadResults.length){
+      petitionsBySection.forEach(sP=>{
+        petitionsByRoadName.forEach(rNP=>{
+          if (rNP.attributes["Petition_Number"]===sP.attributes["Petition_Number"]){
+            petitionResults.push(petitions[rNP.attributes.Petition_Number]);
+          }
+        })
       })
-    })
+    }
+    else {
+      petitionsBySection.forEach(sP=>{
+        petitionResults.push(petitions[sP.attributes.Petition_Number]);
+      })
+    }
+    
 
-    return petitionResults;
-
-    if (!roadResults.features.length && sectionResults.features.length) return "section"
-    if (!sectionResults.features.length) return "none"
+    return petitionResults.sort((a,b)=>{return a.petitionNumber-b.petitionNumber});
   })
 }
 
+function makePopupContent(roadPetitions:Petition[]){
+  const accordion = document.createElement('calcite-accordion');
+  Object.assign(accordion,{scale:"s",selectionMode:"single",iconPosition:"start"});
+  roadPetitions.forEach(rP=>{
+    const accordionItem = document.createElement('calcite-accordion-item');
+    accordionItem.itemTitle = "Petition # "+rP.petitionNumber;
+    //const rPTemplate = document.createElement('template');
+    const parser = new DOMParser()
+    const rPFragment = document.createRange().createContextualFragment(`
+      <span><strong>Petition #&nbsp;:</strong> ${rP.petitionNumber}</span>
+      <span><strong>Type:</strong> ${rP.type}</span>
+      <span><strong>Date Filed:</strong> ${rP.dateFiled}</span>
+      <span><strong>Original Road Name(s):</strong></span>
+      <table name="original-road">
+      <tbody>
+      </tbody>
+      </table>
+      <span><strong>Current Road Name(s)</strong></span>
+      <table name="current-road">
+      <tbody>      
+      </tbody>
+      </table>      
+      <span><strong>Action Taken:</strong> ${rP.actionTaken}</span>
+      <span><strong>Resolution #:</strong> ${rP.resolutionNumber}</span>
+      <span><strong>Notes:</strong> ${rP.notes}</span>
+      <span><strong>Commission Minutes:</strong></span>
+      <table name="commission-minutes">
+      <tbody>
+      </tbody>
+      </table>
+      <span><strong>Legal Description:</strong></span>
+      <table name="legal-description">
+      <tbody>
+      <tr>
+      <td>Section</td>
+      <td>Township</td>
+      <td>Range</td>
+      </tr>
+      </tbody>
+      </table>
+      <span><strong>Petition Images:</strong> ${rP.petitionImages}</span>
+      <span><strong>Other Petition Images:</strong> ${rP.otherPetitionImages}</span>`
+    )
+    Array.from(rPFragment.children).forEach(e=>{
+      if (e.tagName === "SPAN"){
+        e.classList.add("road-petition-field")
+      }  
+      else if (e.tagName === "TABLE"){
+        e.classList.add("road-petition-table")
+        switch (e.getAttribute('name')){
+          case "original-road": 
+            if (!rP.originalRoadNames.length){
+              const row = (e as HTMLTableElement).insertRow();
+              row.innerText = "none";
+            }
+            rP.originalRoadNames.forEach(rN=>{
+              const row = (e as HTMLTableElement).insertRow();
+              row.innerText = rN;
+            })
+            break;                   
+          case "current-road": 
+            if (!rP.currentRoadNames.length){
+              const row = (e as HTMLTableElement).insertRow();
+              row.innerText = "none";
+            }
+            rP.currentRoadNames.forEach(rN=>{
+              const row = (e as HTMLTableElement).insertRow();
+              row.innerText = rN;
+            })            
+            break;     
+          case "commission-minutes": 
+            rP.commissionMinutes.forEach(cM=>{
+              const row = (e as HTMLTableElement).insertRow();
+              row.innerText = "Book "+cM.book + " Page " + cM.page;
+            })
+            break;    
+          case "legal-description":             
+            rP.legalDescriptions.forEach(lD=>{
+              const row = (e as HTMLTableElement).insertRow();
+              Object.values(lD).forEach(val=>{
+                const cell = row.insertCell();
+                cell.innerText = val;
+              })
+              row.addEventListener("mouseenter",()=>{
+                row.classList.add("blue-row");
+                legalDescriptionEnter(lD)
+              });
+              row.addEventListener("mouseleave",()=>{
+                row.classList.remove("blue-row");
+                view.graphics.removeAll();
+              })
+              //row.innerText = lD.s + "     " + lD.t + "     "+ lD.r;
+            })
+            break;       
+            
+        }
+      }    
+      accordionItem.appendChild(e);
+    })
+
+    accordion.appendChild(accordionItem);
+  })
+  return accordion;
+}
+ 
 function getPetitionsByRoadName(roads:esri.Graphic[]){
   //perhaps force the user to click on a single roadName?
   let selectedRoadNames = Array.from(new Set(roads.map((f) => {
@@ -264,4 +398,27 @@ function getPetitionsBySection(sections:esri.Graphic[]){
     return selectedTRSs.indexOf(tRS)>-1;   
   })
 
+}
+
+function legalDescriptionEnter(lD:Section){
+  const TOWN = lD.t.slice(0,-1);
+  const NS = lD.t.split("").pop();
+  const RANGE = lD.r.slice(0,-1);
+  const EW = lD.r.split("").pop();  
+  const where = `SECTION = ${lD.s} AND TOWN = ${TOWN} AND N_S = '${NS}' AND RANGE = ${RANGE} AND E_W = '${EW}'`;  
+  sectionsFL.queryFeatures({
+    where,
+    outFields:[],
+    returnGeometry:true
+  }).then(results=>{
+    results.features.forEach(f=>{
+      f.symbol = {
+        type: "simple-fill",
+        outline: { width: 2.25, color: [0, 255, 197, 1] },
+        color: [0, 169, 230, 0]
+      };
+      view.graphics.removeAll();
+      view.graphics.add(f);
+    })
+  })
 }

@@ -50,18 +50,17 @@ export const view = new MapView({
 
 view.when(() => {
   view.popup.autoOpenEnabled = false;
-          view.on("click", function(event) {
-            // Make sure that there is a valid latitude/longitude
-
-            if (event && event.mapPoint) {
-              populatePopup(view.popup, event.mapPoint);
-            } else {
-              view.popup.open({
-                // Set the popup's title to the coordinates of the location
-                title: "Invalid point location",
-                location: event.mapPoint, // Set the location of the popup to the clicked location
-                content: "Please click on a valid location."
-              });
-            }
-          });
+  view.on("click", function(event) {
+    view.graphics.removeAll();
+    if (event && event.mapPoint) {
+      populatePopup(view.popup, event.mapPoint);
+    } else {
+      view.popup.open({
+        // Set the popup's title to the coordinates of the location
+        title: "Invalid point location",
+        location: event.mapPoint, // Set the location of the popup to the clicked location
+        content: "Please click on a valid location."
+      });
+    }
+  });
 });
