@@ -50,13 +50,30 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/core/prom
     QueryTask_1 = __importDefault(QueryTask_1);
     promiseUtils = __importStar(promiseUtils);
     request_1 = __importDefault(request_1);
+    var Petition = /** @class */ (function () {
+        function Petition(params) {
+            this.petitionNumber = params["Petition_Number"];
+            this.type = params["Type"];
+            this.dateFiled = params["Date_Filed"];
+            this.actionTaken = params["Action_Taken"];
+            this.dateOfAction = params["Date_of_Action"];
+            this.resolutionNumber = params["Resolution_Number"];
+            this.notes = params["Notes"];
+            this.petitionImages = params["Petition_Images"];
+            this.otherPetitionImages = params["Other_Petition_Images"];
+            this.dateRecordAdded = params["DateRecordAdded"];
+            this.updated = params["Updated"];
+        }
+        return Petition;
+    }());
     var roadsFL;
     var sectionsFL;
-    var commissionMinutes;
-    var currentRoadName;
-    var legalDescription;
-    var originalRoadName;
-    var roadPetition;
+    var commissionMinutesList;
+    var currentRoadNameList;
+    var legalDescriptionList;
+    var originalRoadNameList;
+    var roadPetitionList;
+    var petitions = {};
     function makeFeatureLayers(gcLayer) {
         var _this = this;
         var _a;
@@ -68,14 +85,12 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/core/prom
                         return [4 /*yield*/, sublayer.createFeatureLayer()];
                     case 1:
                         roadsFL = _a.sent();
-                        console.log(roadsFL);
                         return [3 /*break*/, 4];
                     case 2:
                         if (!(sublayer.title == "Sections")) return [3 /*break*/, 4];
                         return [4 /*yield*/, sublayer.createFeatureLayer()];
                     case 3:
                         sectionsFL = _a.sent();
-                        console.log(sectionsFL);
                         _a.label = 4;
                     case 4: return [2 /*return*/];
                 }
@@ -118,26 +133,78 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/core/prom
             var tr = response.value;
             switch (tr.table.name) {
                 case "Commission_Minutes": {
-                    commissionMinutes = tr.results.features;
+                    commissionMinutesList = tr.results.features;
                     break;
                 }
                 case "Current_Road_Name": {
-                    currentRoadName = tr.results.features;
+                    currentRoadNameList = tr.results.features;
+                    processRoadNames();
                     break;
                 }
                 case "Legal_Description": {
-                    legalDescription = tr.results.features;
+                    legalDescriptionList = tr.results.features;
                     break;
                 }
                 case "Original_Road_Name": {
-                    originalRoadName = tr.results.features;
+                    originalRoadNameList = tr.results.features;
                     break;
                 }
                 case "Road_Petition": {
-                    roadPetition = tr.results.features;
+                    roadPetitionList = tr.results.features;
                     break;
                 }
             }
+        });
+        createPetitions();
+    }
+    function createPetitions() {
+        roadPetitionList.forEach(function (rp) {
+            var petition = new Petition(rp.attributes);
+            petition.currentRoadNames = currentRoadNameList.reduce(function (roadNames, rN) {
+                if (rN.attributes.Petition_Number == petition.petitionNumber) {
+                    var roadName = rN.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
+                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+                    roadNames.push(roadName);
+                }
+                return roadNames;
+            }, []);
+            petition.originalRoadNames = originalRoadNameList.reduce(function (roadNames, rN) {
+                if (rN.attributes.Petition_Number == petition.petitionNumber) {
+                    var roadName = rN.attributes["Original_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
+                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+                    roadNames.push(roadName);
+                }
+                return roadNames;
+            }, []);
+            petition.legalDescriptions = legalDescriptionList.reduce(function (sections, lD) {
+                if (lD.attributes.Petition_Number == petition.petitionNumber) {
+                    var section = {
+                        s: lD.attributes.Section,
+                        t: lD.attributes.Township,
+                        r: lD.attributes.Range
+                    };
+                    sections.push(section);
+                }
+                return sections;
+            }, []);
+            petition.commissionMinutes = commissionMinutesList.reduce(function (minutes, cM) {
+                if (cM.attributes.Petition_Number == petition.petitionNumber) {
+                    var minute = {
+                        book: cM.attributes.Book,
+                        page: cM.attributes.Page
+                    };
+                    minutes.push(minute);
+                }
+                return minutes;
+            }, []);
+            petitions[petition.petitionNumber] = petition;
+        });
+    }
+    ;
+    function processRoadNames() {
+        var roadTypes = currentRoadNameList.map(function (f) {
+            var roadNameSplit = f.attributes["Current_Road_Name"].trim().toUpperCase().split(" ");
+            return roadNameSplit[roadNameSplit.length - 1];
         });
     }
     function populatePopup(popup, mapPoint) {
@@ -178,10 +245,23 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/core/prom
                         return [4 /*yield*/, promiseUtils.eachAlways([roadsFL.queryFeatures(query), sectionsFL.queryFeatures(query)]).then(function (results) {
                                 var roadResults = results[0].value;
                                 var sectionResults = results[1].value;
-                                var roadPetitions = [];
-                                if (roadResults.features.length && sectionResults.features.length) {
-                                    return getPetitionsByRoadAndSection(roadResults.features, sectionResults.features);
+                                var petitionsByRoadName = [];
+                                var petitionsBySection = [];
+                                if (roadResults.features.length) {
+                                    petitionsByRoadName = getPetitionsByRoadName(roadResults.features);
                                 }
+                                if (sectionResults.features.length) {
+                                    petitionsBySection = getPetitionsBySection(sectionResults.features);
+                                }
+                                var petitionResults = [];
+                                petitionsBySection.forEach(function (sP) {
+                                    petitionsByRoadName.forEach(function (rNP) {
+                                        if (rNP.attributes["Petition_Number"] === sP.attributes["Petition_Number"]) {
+                                            petitionResults.push(petitions[rNP.attributes.Petition_Number]);
+                                        }
+                                    });
+                                });
+                                return petitionResults;
                                 if (!roadResults.features.length && sectionResults.features.length)
                                     return "section";
                                 if (!sectionResults.features.length)
@@ -192,22 +272,30 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/core/prom
             });
         });
     }
-    function getPetitionsByRoadAndSection(roads, sections) {
+    function getPetitionsByRoadName(roads) {
         //perhaps force the user to click on a single roadName?
-        var roadNames = Array.from(new Set(roads.map(function (f) {
+        var selectedRoadNames = Array.from(new Set(roads.map(function (f) {
             //let roadName = "";
             return ["DIRPRE", "ROADNAME", "ROADTYPE", "DIRSUF"].reduce(function (roadName, a) {
                 return roadName += (f.attributes[a] || "") + " ";
             }, "").split(" ").join(" ").trim();
         })));
-        var section = sections[0];
-        var roadNamePetitions = currentRoadName.filter(function (f) {
+        return currentRoadNameList.filter(function (f) {
             var roadName = f.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-            roadName = roadName.replace(/ ROAD$/, " RD");
-            return roadNames.indexOf(roadName) > -1;
+            roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+            return selectedRoadNames.indexOf(roadName) > -1;
         });
-        console.log(roadNames);
     }
-    var makePopupContent = function () { };
+    function getPetitionsBySection(sections) {
+        //perhaps force the user to click on a single roadName?
+        var selectedTRSs = Array.from(new Set(sections.map(function (f) {
+            //let roadName = "";
+            return f.attributes["TOWN"] + f.attributes["N_S"] + " " + f.attributes["RANGE"] + f.attributes["E_W"] + " " + f.attributes["SECTION"];
+        })));
+        return legalDescriptionList.filter(function (f) {
+            var tRS = [f.attributes["Township"], f.attributes["Range"], f.attributes["Section"]].join(" ");
+            return selectedTRSs.indexOf(tRS) > -1;
+        });
+    }
 });
 //# sourceMappingURL=roadPetitions.js.map
