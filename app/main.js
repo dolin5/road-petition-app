@@ -53,6 +53,9 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/Basemap", 
         constraints: {
             rotationEnabled: false
         },
+        padding: {
+            top: 50
+        },
         popup: {
             actions: [],
             dockEnabled: true,

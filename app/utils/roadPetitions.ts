@@ -417,12 +417,11 @@ function getPetitionsBySection(sections:esri.Graphic[]){
   //perhaps force the user to click on a single roadName?
   let selectedTRSs = Array.from(new Set(sections.map((f) => {
     //let roadName = "";
-    return "T"+f.attributes["TOWN"]+f.attributes["N_S"] +"R"+f.attributes["RANGE"] + f.attributes["E_W"] +"S" +f.attributes["SECTION"];
+    return ["T"+f.attributes["TOWN"]+f.attributes["N_S"], "R"+f.attributes["RANGE"] + f.attributes["E_W"], "S" +f.attributes["SECTION"]].join(" ");
   })));
  
   return {selectedTRSs,petitions:legalDescriptionList.filter(f=>{
-    let tRS:string = ["T",f.attributes["Township"],"R",f.attributes["Range"],"S",f.attributes["Section"]].join("");
-   
+    let tRS:string = ["T"+f.attributes["Township"],"R"+f.attributes["Range"],"S"+f.attributes["Section"]].join(" ");
     return selectedTRSs.indexOf(tRS)>-1;   
   })}
 

@@ -410,10 +410,10 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
         //perhaps force the user to click on a single roadName?
         var selectedTRSs = Array.from(new Set(sections.map(function (f) {
             //let roadName = "";
-            return "T" + f.attributes["TOWN"] + f.attributes["N_S"] + "R" + f.attributes["RANGE"] + f.attributes["E_W"] + "S" + f.attributes["SECTION"];
+            return ["T" + f.attributes["TOWN"] + f.attributes["N_S"], "R" + f.attributes["RANGE"] + f.attributes["E_W"], "S" + f.attributes["SECTION"]].join(" ");
         })));
         return { selectedTRSs: selectedTRSs, petitions: legalDescriptionList.filter(function (f) {
-                var tRS = ["T", f.attributes["Township"], "R", f.attributes["Range"], "S", f.attributes["Section"]].join("");
+                var tRS = ["T" + f.attributes["Township"], "R" + f.attributes["Range"], "S" + f.attributes["Section"]].join(" ");
                 return selectedTRSs.indexOf(tRS) > -1;
             }) };
     }

@@ -5,12 +5,25 @@
     <title>Eric's Road Petition Map</title>
     <style>
       html,
-      body,
-      #viewDiv {
+      body {
         padding: 0;
         margin: 0;
         height: 100%;
         width: 100%;
+      }
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        position:absolute;
+        top:0px;
+        bottom:0px;
+        width: 100%;
+      }
+      #header {
+        position: absolute;
+        top:0px;
+        height: 50px;
+        width: 100%;  
       }
     </style>
     <script type="module" src="https://unpkg.com/@esri/calcite-components@1.0.0-beta.20/dist/calcite/calcite.esm.js"></script>
@@ -32,6 +45,11 @@
     <script src="https://js.arcgis.com/4.14"></script>
   </head>
   <body>
+    <div id="header">
+      <span>
+        Gallatin County Clerk & Recorder Road Petition Map
+      </span>
+    </div>
     <div id="viewDiv"></div>
     <script>require(["app/main"]);</script>
   </body>

@@ -20,3 +20,19 @@
 .esri-popup__header-title {
   word-break: break-word;
 }
+
+#header {
+  z-index:1;
+  background:  no-repeat top center, linear-gradient(to right, #502070 0%,  #2f3c90 26%,#fff0 50%);
+  display: flex;
+  align-items: center;
+  span {
+    margin-left: 25px;
+    color:white;
+    font-size: larger;
+  }
+}
+
+#viewDiv {
+  border-top: 1px solid #9e9e9e;
+}

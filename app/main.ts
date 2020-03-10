@@ -58,6 +58,9 @@ export const view = new MapView({
   constraints:{
     rotationEnabled:false
   },
+  padding:{
+    top:50
+  },
   popup: {
     actions: [],
     dockEnabled: true,
