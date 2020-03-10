@@ -18,12 +18,12 @@
 
 #header {
   z-index: 1;
-  background: no-repeat top center, linear-gradient(to right, #502070 0%, #2f3c90 26%, #fff0 50%);
+  background: no-repeat top center, linear-gradient(to right, #502070 0%, #2f3c90 500px, #fff0 700px);
   display: flex;
   align-items: center; }
 
 #header span {
-  margin-left: 25px;
+  margin-left: 20px;
   color: white;
   font-size: larger; }
 
