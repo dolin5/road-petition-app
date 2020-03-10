@@ -248,7 +248,7 @@ async function queryRoadPetitions(mapPoint:esri.Point){
     if (petitionsByRoadName?.selectedRoadNames.length){
       title += " for";
       petitionsByRoadName.selectedRoadNames.forEach(rN => {
-        title += " " + rN + " and";        
+        title += " " + rN + " or ";        
       });
       title = title.slice(0,-4);
     }
@@ -256,7 +256,7 @@ async function queryRoadPetitions(mapPoint:esri.Point){
     if (petitionsBySection.selectedTRSs.length){
       title += " in";
       petitionsBySection.selectedTRSs.forEach(tRS=>{
-        title+= " " + tRS + " and";      
+        title+= " " + tRS + " or ";      
       })
       title = title.slice(0,-4);
     }

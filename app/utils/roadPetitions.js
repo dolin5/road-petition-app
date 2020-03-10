@@ -279,14 +279,14 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                                 if (petitionsByRoadName === null || petitionsByRoadName === void 0 ? void 0 : petitionsByRoadName.selectedRoadNames.length) {
                                     title += " for";
                                     petitionsByRoadName.selectedRoadNames.forEach(function (rN) {
-                                        title += " " + rN + " and";
+                                        title += " " + rN + " or ";
                                     });
                                     title = title.slice(0, -4);
                                 }
                                 if (petitionsBySection.selectedTRSs.length) {
                                     title += " in";
                                     petitionsBySection.selectedTRSs.forEach(function (tRS) {
-                                        title += " " + tRS + " and";
+                                        title += " " + tRS + " or ";
                                     });
                                     title = title.slice(0, -4);
                                 }
