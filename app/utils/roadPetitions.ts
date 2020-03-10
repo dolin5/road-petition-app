@@ -56,7 +56,7 @@ class Petition {
   constructor(params:PetitionParameters) {
     this.petitionNumber = params["Petition_Number"];
     this.type = params["Type"];
-    this.dateFiled = params["Date_Filed"];
+    this.dateFiled = params["Date_Filed"].replace(" 0:00:000","");
     this.actionTaken = params["Action_Taken"];
     this.dateOfAction = params["Date_of_Action"];
     this.resolutionNumber = params["Resolution_Number"];
@@ -77,6 +77,7 @@ let originalRoadNameList :esri.Graphic[];
 let roadPetitionList:esri.Graphic[];
 let petitions:{number?:Petition} = {};
 let highlightGraphic:esri.Graphic;
+let mouseIn:boolean=false;
 
 export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
   gcLayer?.sublayers?.forEach(async (sublayer: esri.Sublayer) => {
@@ -212,15 +213,14 @@ function processRoadNames(){
   })
 }
 
-
 export async function populatePopup(popup:esri.Popup,mapPoint:esri.Point){
   popup.open({
     title:"loading..."
   });
-  const popupContent = await queryRoadPetitions(mapPoint).then(makePopupContent);
-  popup.content = popupContent;
+  const popupParams = await queryRoadPetitions(mapPoint).then(makePopupContent);
+  popup.content = popupParams.content;
+  popup.title = popupParams.title;
 }
-
 
 async function queryRoadPetitions(mapPoint:esri.Point){
   let query = new Query({
@@ -235,18 +235,35 @@ async function queryRoadPetitions(mapPoint:esri.Point){
   return await promiseUtils.eachAlways([roadsFL.queryFeatures(query),sectionsFL.queryFeatures(query)]).then((results:esri.EachAlwaysResult)=>{
     const roadResults = results[0].value.features;
     const sectionResults = results[1].value.features;
-    let petitionsByRoadName:esri.Graphic[] = [];
-    let petitionsBySection:esri.Graphic[] = []
+    let petitionsByRoadName:{selectedRoadNames:string[],petitions:(esri.Graphic[])};
+    let petitionsBySection:{selectedTRSs:string[],petitions:(esri.Graphic[])};
+    let title = "Road petitions";
     if (roadResults.length){
       petitionsByRoadName = getPetitionsByRoadName(roadResults);
     }
     if (sectionResults.length){
       petitionsBySection = getPetitionsBySection(sectionResults);
     }
+
+    if (petitionsByRoadName?.selectedRoadNames.length){
+      title += " for";
+      petitionsByRoadName.selectedRoadNames.forEach(rN => {
+        title += " " + rN + " and";        
+      });
+      title = title.slice(0,-4);
+    }
+
+    if (petitionsBySection.selectedTRSs.length){
+      title += " in";
+      petitionsBySection.selectedTRSs.forEach(tRS=>{
+        title+= " " + tRS + " and";      
+      })
+      title = title.slice(0,-4);
+    }
     let petitionResults:Petition[] = [];
     if (roadResults.length){
-      petitionsBySection.forEach(sP=>{
-        petitionsByRoadName.forEach(rNP=>{
+      petitionsBySection.petitions.forEach(sP=>{
+        petitionsByRoadName.petitions.forEach(rNP=>{
           if (rNP.attributes["Petition_Number"]===sP.attributes["Petition_Number"]){
             petitionResults.push(petitions[rNP.attributes.Petition_Number]);
           }
@@ -254,17 +271,28 @@ async function queryRoadPetitions(mapPoint:esri.Point){
       })
     }
     else {
-      petitionsBySection.forEach(sP=>{
+      petitionsBySection.petitions.forEach(sP=>{
         petitionResults.push(petitions[sP.attributes.Petition_Number]);
       })
     }
+    let uniquePetitionNumbers = [];
+
+    let petitionResults = petitionResults.filter((p,idx)=>{
+      if (uniquePetitionNumbers.indexOf(p.petitionNumber)>-1){
+        return false
+      }
+      uniquePetitionNumbers.push(p.petitionNumber);
+      return true;      
+    })
     
 
-    return petitionResults.sort((a,b)=>{return a.petitionNumber-b.petitionNumber});
+    return {title,roadPetitions:petitionResults.sort((a,b)=>{return a.petitionNumber-b.petitionNumber})};
   })
 }
 
-function makePopupContent(roadPetitions:Petition[]){
+function makePopupContent(params){
+  let title = params.title;
+  let roadPetitions = params.roadPetitions;
   const accordion = document.createElement('calcite-accordion');
   Object.assign(accordion,{scale:"s",selectionMode:"single",iconPosition:"start"});
   roadPetitions.forEach(rP=>{
@@ -348,25 +376,25 @@ function makePopupContent(roadPetitions:Petition[]){
                 cell.innerText = val;
               })
               row.addEventListener("mouseenter",()=>{
+                mouseIn=true;
                 row.classList.add("blue-row");
                 legalDescriptionEnter(lD)
               });
               row.addEventListener("mouseleave",()=>{
+                mouseIn=false;
                 row.classList.remove("blue-row");
                 view.graphics.removeAll();
               })
               //row.innerText = lD.s + "     " + lD.t + "     "+ lD.r;
             })
-            break;       
-            
+            break;     
         }
       }    
       accordionItem.appendChild(e);
     })
-
     accordion.appendChild(accordionItem);
   })
-  return accordion;
+  return {title,content:accordion};
 }
  
 function getPetitionsByRoadName(roads:esri.Graphic[]){
@@ -378,25 +406,25 @@ function getPetitionsByRoadName(roads:esri.Graphic[]){
     },"").split(" ").join(" ").trim();
   })));
 
-  return currentRoadNameList.filter(f=>{
+  return {selectedRoadNames,petitions:currentRoadNameList.filter(f=>{
     let roadName:string = f.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
     roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/\.$/,"");
     return selectedRoadNames.indexOf(roadName)>-1;   
-  })
+  })}
 }
 
 function getPetitionsBySection(sections:esri.Graphic[]){
   //perhaps force the user to click on a single roadName?
   let selectedTRSs = Array.from(new Set(sections.map((f) => {
     //let roadName = "";
-    return f.attributes["TOWN"]+f.attributes["N_S"] + " " + f.attributes["RANGE"] + f.attributes["E_W"] + " " + f.attributes["SECTION"];
+    return "T"+f.attributes["TOWN"]+f.attributes["N_S"] +"R"+f.attributes["RANGE"] + f.attributes["E_W"] +"S" +f.attributes["SECTION"];
   })));
  
-  return legalDescriptionList.filter(f=>{
-    let tRS:string = [f.attributes["Township"],f.attributes["Range"],f.attributes["Section"]].join(" ");
+  return {selectedTRSs,petitions:legalDescriptionList.filter(f=>{
+    let tRS:string = ["T",f.attributes["Township"],"R",f.attributes["Range"],"S",f.attributes["Section"]].join("");
    
     return selectedTRSs.indexOf(tRS)>-1;   
-  })
+  })}
 
 }
 
@@ -412,13 +440,16 @@ function legalDescriptionEnter(lD:Section){
     returnGeometry:true
   }).then(results=>{
     results.features.forEach(f=>{
-      f.symbol = {
-        type: "simple-fill",
-        outline: { width: 2.25, color: [0, 255, 197, 1] },
-        color: [0, 169, 230, 0]
-      };
-      view.graphics.removeAll();
-      view.graphics.add(f);
+      if (mouseIn){
+        f.symbol = {
+          type: "simple-fill",
+          outline: { width: 2.25, color: [0, 255, 197, 1] },
+          color: [0, 169, 230, 0]
+        };
+        view.graphics.removeAll();
+        view.graphics.add(f);
+      }
+      
     })
   })
 }

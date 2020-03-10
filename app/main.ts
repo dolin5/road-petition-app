@@ -4,6 +4,7 @@ import Basemap from "esri/Basemap";
 import VectorTileLayer from "esri/layers/VectorTileLayer";
 import TileLayer from "esri/layers/TileLayer";
 import MapImageLayer from "esri/layers/MapImageLayer";
+import FeatureLayer from "esri/layers/FeatureLayer";
 import * as watchUtils from "esri/core/watchUtils";
 import { populatePopup, makeFeatureLayers } from "./utils/roadPetitions";
 
@@ -22,15 +23,31 @@ const basemap = new Basemap({
   ]  
 });
 
+const townshipsLayer = new FeatureLayer({
+  url:"https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/2"
+})
+
+const sectionsLayer = new FeatureLayer({
+  url:"https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/3"
+})
+
+
+const roadsVTLayer = new VectorTileLayer({
+  portalItem:{
+    id:"107474a0debf4232a68c93690eaf3e84"
+  }
+})
+
 const gcLayer = new MapImageLayer({
-  url: "https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver"
+  url: "https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver",
+  opacity:0
 });
 
 gcLayer.when(makeFeatureLayers);
 
 const map = new EsriMap({
   basemap,
-  layers: [gcLayer]
+  layers: [gcLayer,sectionsLayer,townshipsLayer,roadsVTLayer]
 });
 
 export const view = new MapView({
@@ -38,6 +55,9 @@ export const view = new MapView({
   container: "viewDiv",
   center: [-111.244, 45.752], 
   zoom: 10,
+  constraints:{
+    rotationEnabled:false
+  },
   popup: {
     actions: [],
     dockEnabled: true,

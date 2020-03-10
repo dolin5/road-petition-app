@@ -8,8 +8,15 @@
 
 .esri-popup table {
   font-size: small;
+  .esri-popup__header-title {
+    word-break: break-word;
+  }
 }
 
 .blue-row {
   background:#00FFC5;
+}
+
+.esri-popup__header-title {
+  word-break: break-word;
 }
