@@ -1,5 +1,6 @@
 import EsriMap from "esri/Map";
 import MapView from "esri/views/MapView";
+import Search from "esri/widgets/Search";
 import Basemap from "esri/Basemap";
 import VectorTileLayer from "esri/layers/VectorTileLayer";
 import TileLayer from "esri/layers/TileLayer";
@@ -71,7 +72,13 @@ export const view = new MapView({
   }
 });
 
+const searchWidget = new Search({
+  view: view
+});
+
 view.when(() => {
+  view.ui.add(searchWidget,"top-left");
+
   view.popup.autoOpenEnabled = false;
   view.on("click", function(event) {
     view.graphics.removeAll();

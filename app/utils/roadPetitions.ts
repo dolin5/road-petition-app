@@ -147,7 +147,7 @@ function createPetitions(){
     petition.currentRoadNames = currentRoadNameList.reduce((roadNames:string[],rN:esri.Graphic)=>{
       if (rN.attributes.Petition_Number == petition.petitionNumber){
         let roadName:string = rN.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-        roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/\.$/,"");
+        roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/ LANE$/," LN").replace(/\.$/,"");
         roadNames.push(roadName);
       }
       return roadNames;    
@@ -155,7 +155,7 @@ function createPetitions(){
     petition.originalRoadNames = originalRoadNameList.reduce((roadNames:string[],rN:esri.Graphic)=>{
       if (rN.attributes.Petition_Number == petition.petitionNumber){
         let roadName:string = rN.attributes["Original_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-        roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/\.$/,"");
+        roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/ LANE$/," LN").replace(/\.$/,"");
         roadNames.push(roadName);
       }
       return roadNames;    
@@ -408,7 +408,7 @@ function getPetitionsByRoadName(roads:esri.Graphic[]){
 
   return {selectedRoadNames,petitions:currentRoadNameList.filter(f=>{
     let roadName:string = f.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-    roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/\.$/,"");
+    roadName = roadName.replace(/ ROAD$/," RD").replace(/ AVENUE$/," AVE").replace(/ TRAIL$/," TRL").replace(/ LANE$/," LN").replace(/\.$/,"");
     return selectedRoadNames.indexOf(roadName)>-1;   
   })}
 }

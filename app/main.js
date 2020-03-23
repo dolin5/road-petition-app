@@ -1,11 +1,12 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/Basemap", "esri/layers/VectorTileLayer", "esri/layers/TileLayer", "esri/layers/MapImageLayer", "esri/layers/FeatureLayer", "./utils/roadPetitions"], function (require, exports, Map_1, MapView_1, Basemap_1, VectorTileLayer_1, TileLayer_1, MapImageLayer_1, FeatureLayer_1, roadPetitions_1) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/widgets/Search", "esri/Basemap", "esri/layers/VectorTileLayer", "esri/layers/TileLayer", "esri/layers/MapImageLayer", "esri/layers/FeatureLayer", "./utils/roadPetitions"], function (require, exports, Map_1, MapView_1, Search_1, Basemap_1, VectorTileLayer_1, TileLayer_1, MapImageLayer_1, FeatureLayer_1, roadPetitions_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     Map_1 = __importDefault(Map_1);
     MapView_1 = __importDefault(MapView_1);
+    Search_1 = __importDefault(Search_1);
     Basemap_1 = __importDefault(Basemap_1);
     VectorTileLayer_1 = __importDefault(VectorTileLayer_1);
     TileLayer_1 = __importDefault(TileLayer_1);
@@ -65,7 +66,11 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/Basemap", 
             }
         }
     });
+    var searchWidget = new Search_1.default({
+        view: exports.view
+    });
     exports.view.when(function () {
+        exports.view.ui.add(searchWidget, "top-left");
         exports.view.popup.autoOpenEnabled = false;
         exports.view.on("click", function (event) {
             exports.view.graphics.removeAll();

@@ -166,7 +166,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
             petition.currentRoadNames = currentRoadNameList.reduce(function (roadNames, rN) {
                 if (rN.attributes.Petition_Number == petition.petitionNumber) {
                     var roadName = rN.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/ LANE$/, " LN").replace(/\.$/, "");
                     roadNames.push(roadName);
                 }
                 return roadNames;
@@ -174,7 +174,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
             petition.originalRoadNames = originalRoadNameList.reduce(function (roadNames, rN) {
                 if (rN.attributes.Petition_Number == petition.petitionNumber) {
                     var roadName = rN.attributes["Original_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+                    roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/ LANE$/, " LN").replace(/\.$/, "");
                     roadNames.push(roadName);
                 }
                 return roadNames;
@@ -402,7 +402,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
         })));
         return { selectedRoadNames: selectedRoadNames, petitions: currentRoadNameList.filter(function (f) {
                 var roadName = f.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
-                roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/\.$/, "");
+                roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/ LANE$/, " LN").replace(/\.$/, "");
                 return selectedRoadNames.indexOf(roadName) > -1;
             }) };
     }
