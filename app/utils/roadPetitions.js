@@ -44,13 +44,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
-define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/core/promiseUtils", "esri/request"], function (require, exports, main_1, QueryTask_1, Query_1, promiseUtils, request_1) {
+define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/core/promiseUtils", "esri/request", "./search"], function (require, exports, main_1, QueryTask_1, Query_1, promiseUtils, request_1, search_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     QueryTask_1 = __importDefault(QueryTask_1);
     Query_1 = __importDefault(Query_1);
     promiseUtils = __importStar(promiseUtils);
     request_1 = __importDefault(request_1);
+    search_1 = __importDefault(search_1);
     var Petition = /** @class */ (function () {
         function Petition(params) {
             this.petitionNumber = params["Petition_Number"];
@@ -110,6 +111,9 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
     function queryTables(gcServiceData) {
         var _this = this;
         promiseUtils.eachAlways(gcServiceData.data.tables.map(function (t) {
+            if (t.name === "Current_Road_Name") {
+                search_1.default(gcServiceData.url + "/" + t.id);
+            }
             return promiseUtils.create(function (res, rej) { return __awaiter(_this, void 0, void 0, function () {
                 var qt, results;
                 return __generator(this, function (_a) {

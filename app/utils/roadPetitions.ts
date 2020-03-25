@@ -5,6 +5,7 @@ import QueryTask from "esri/tasks/QueryTask";
 import Query from "esri/tasks/support/Query";
 import * as promiseUtils from "esri/core/promiseUtils";
 import esriRequest from "esri/request";
+import initCurrentRoadNameSearch from "./search";
 
 interface Table {
   id:number;
@@ -98,6 +99,9 @@ export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
 
 function queryTables(gcServiceData:esri.RequestResponse){
   promiseUtils.eachAlways( gcServiceData.data.tables.map((t:Table) => {
+    if (t.name === "Current_Road_Name"){
+      initCurrentRoadNameSearch(gcServiceData.url+"/"+t.id);
+    }
     return promiseUtils.create(async(res,rej)=>{
       const qt = new QueryTask({
         url:gcServiceData.url+"/"+t.id
