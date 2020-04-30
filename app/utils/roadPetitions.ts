@@ -5,7 +5,7 @@ import QueryTask from "esri/tasks/QueryTask";
 import Query from "esri/tasks/support/Query";
 import * as promiseUtils from "esri/core/promiseUtils";
 import esriRequest from "esri/request";
-import initCurrentRoadNameSearch from "./search";
+import {getSectionGraphics, displaySection} from "./sectionUtils"
 
 interface Table {
   id:number;
@@ -38,7 +38,7 @@ interface PetitionParameters {
   Test:string
 }
 
-class Petition {
+export class Petition {
   petitionNumber:number;
   type:string;
   dateFiled:string;
@@ -64,19 +64,19 @@ class Petition {
     this.notes = params["Notes"];
     this.petitionImages = params["Petition_Images"];
     this.otherPetitionImages = params["Other_Petition_Images"];
-    this.dateRecordAdded= params["DateRecordAdded"];
-    this.updated= params["Updated"];
+    this.dateRecordAdded = params["DateRecordAdded"];
+    this.updated = params["Updated"];
   }
 }
 
-let roadsFL:esri.FeatureLayer;
+export let roadsFL:esri.FeatureLayer;
 let sectionsFL:esri.FeatureLayer;
 let commissionMinutesList:esri.Graphic[];
-let currentRoadNameList:esri.Graphic[];
+export let currentRoadNameList:esri.Graphic[];
 let legalDescriptionList :esri.Graphic[];
-let originalRoadNameList :esri.Graphic[];
+export let originalRoadNameList :esri.Graphic[];
 let roadPetitionList:esri.Graphic[];
-let petitions:{number?:Petition} = {};
+export let petitions:{number?:Petition} = {};
 let highlightGraphic:esri.Graphic;
 let mouseIn:boolean=false;
 
@@ -87,6 +87,8 @@ export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
     }
     else if (sublayer.title == "Sections") {
       sectionsFL = await sublayer.createFeatureLayer();
+      //getSectionGraphics(sectionsFL);
+      getSectionGraphics(sectionsFL);
     }
   });
   esriRequest(gcLayer.url, {
@@ -99,9 +101,6 @@ export function makeFeatureLayers(gcLayer:esri.MapImageLayer){
 
 function queryTables(gcServiceData:esri.RequestResponse){
   promiseUtils.eachAlways( gcServiceData.data.tables.map((t:Table) => {
-    if (t.name === "Current_Road_Name"){
-      initCurrentRoadNameSearch(gcServiceData.url+"/"+t.id);
-    }
     return promiseUtils.create(async(res,rej)=>{
       const qt = new QueryTask({
         url:gcServiceData.url+"/"+t.id
@@ -169,8 +168,8 @@ function createPetitions(){
       if (lD.attributes.Petition_Number == petition.petitionNumber){
         let section:Section = {
           s:lD.attributes.Section,
-          t:lD.attributes.Township,
-          r:lD.attributes.Range
+          t:lD.attributes.Township.toUpperCase(),
+          r:lD.attributes.Range.toUpperCase()
         };
         sections.push(section);
       }
@@ -179,7 +178,7 @@ function createPetitions(){
       if (a.t != b.t){
         return (a.t<b.t)?-1:1
       }        
-      else if (a.r != a.r){
+      else if (a.r != b.r){
         return (a.r<b.r)?-1:1
       }
       else if (a.s != b.s){
@@ -281,7 +280,7 @@ async function queryRoadPetitions(mapPoint:esri.Point){
     }
     let uniquePetitionNumbers = [];
 
-    let petitionResults = petitionResults.filter((p,idx)=>{
+    petitionResults = petitionResults.filter((p,idx)=>{
       if (uniquePetitionNumbers.indexOf(p.petitionNumber)>-1){
         return false
       }
@@ -294,7 +293,7 @@ async function queryRoadPetitions(mapPoint:esri.Point){
   })
 }
 
-function makePopupContent(params){
+export function makePopupContent(params){
   let title = params.title;
   let roadPetitions = params.roadPetitions;
   const accordion = document.createElement('calcite-accordion');
@@ -379,13 +378,13 @@ function makePopupContent(params){
                 const cell = row.insertCell();
                 cell.innerText = val;
               })
-              row.addEventListener("mouseenter",()=>{
-                mouseIn=true;
+              row.addEventListener("mouseenter",(e)=>{
+                //mouseIn=true;
+                
                 row.classList.add("blue-row");
-                legalDescriptionEnter(lD)
+                legalDescriptionHover(lD)
               });
               row.addEventListener("mouseleave",()=>{
-                mouseIn=false;
                 row.classList.remove("blue-row");
                 view.graphics.removeAll();
               })
@@ -431,28 +430,6 @@ function getPetitionsBySection(sections:esri.Graphic[]){
 
 }
 
-function legalDescriptionEnter(lD:Section){
-  const TOWN = lD.t.slice(0,-1);
-  const NS = lD.t.split("").pop();
-  const RANGE = lD.r.slice(0,-1);
-  const EW = lD.r.split("").pop();  
-  const where = `SECTION = ${lD.s} AND TOWN = ${TOWN} AND N_S = '${NS}' AND RANGE = ${RANGE} AND E_W = '${EW}'`;  
-  sectionsFL.queryFeatures({
-    where,
-    outFields:[],
-    returnGeometry:true
-  }).then(results=>{
-    results.features.forEach(f=>{
-      if (mouseIn){
-        f.symbol = {
-          type: "simple-fill",
-          outline: { width: 2.25, color: [0, 255, 197, 1] },
-          color: [0, 169, 230, 0]
-        };
-        view.graphics.removeAll();
-        view.graphics.add(f);
-      }
-      
-    })
-  })
+function legalDescriptionHover(lD:Section){
+  displaySection({s:lD.s,t:Number(lD.t.slice(0,-1)),ns:lD.t.split("").pop(),r:Number(lD.r.slice(0,-1)),ew:lD.r.split("").pop()});
 }

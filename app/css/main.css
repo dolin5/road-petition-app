@@ -9,6 +9,9 @@
   .esri-popup table .esri-popup__header-title {
     word-break: break-word; }
 
+.esri-popup table td {
+  padding: 0px; }
+
 .blue-row {
   background: #00FFC5; }
 
