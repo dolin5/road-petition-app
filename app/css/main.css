@@ -21,7 +21,7 @@
 
 #header {
   z-index: 1;
-  background: no-repeat top center, linear-gradient(to right, #502070 0%, #2f3c90 500px, #fff0 700px);
+  background: no-repeat top center, linear-gradient(to right, #502070 0%, #2f3c90 500px, #2f3c908f 100%);
   display: flex;
   align-items: center; }
 
