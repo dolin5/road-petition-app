@@ -1,3 +1,22 @@
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -37,18 +56,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/core/promiseUtils", "esri/request", "./sectionUtils"], function (require, exports, main_1, QueryTask_1, Query_1, promiseUtils, request_1, sectionUtils_1) {
+define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/support/Query", "esri/geometry/geometryEngine", "esri/core/promiseUtils", "esri/request", "./sectionUtils", "./roadUtils", "esri/Graphic"], function (require, exports, main_1, QueryTask_1, Query_1, geometryEngine, promiseUtils, request_1, sectionUtils_1, roadUtils_1, Graphic) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.makePopupContent = exports.populatePopup = exports.makeFeatureLayers = exports.petitions = exports.originalRoadNameList = exports.currentRoadNameList = exports.roadsFL = exports.Petition = void 0;
     QueryTask_1 = __importDefault(QueryTask_1);
     Query_1 = __importDefault(Query_1);
+    geometryEngine = __importStar(geometryEngine);
     promiseUtils = __importStar(promiseUtils);
     request_1 = __importDefault(request_1);
     var Petition = /** @class */ (function () {
@@ -73,8 +87,6 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
     var legalDescriptionList;
     var roadPetitionList;
     exports.petitions = {};
-    var highlightGraphic;
-    var mouseIn = false;
     function makeFeatureLayers(gcLayer) {
         var _this = this;
         var _a;
@@ -82,13 +94,14 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!(sublayer.title == "Roads")) return [3 /*break*/, 2];
+                        if (!(sublayer.title === "Roads")) return [3 /*break*/, 2];
                         return [4 /*yield*/, sublayer.createFeatureLayer()];
                     case 1:
                         exports.roadsFL = _a.sent();
+                        roadUtils_1.getRoadGraphics(exports.roadsFL);
                         return [3 /*break*/, 4];
                     case 2:
-                        if (!(sublayer.title == "Sections")) return [3 /*break*/, 4];
+                        if (!(sublayer.title === "Sections")) return [3 /*break*/, 4];
                         return [4 /*yield*/, sublayer.createFeatureLayer()];
                     case 3:
                         sectionsFL = _a.sent();
@@ -164,7 +177,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
         roadPetitionList.forEach(function (rp) {
             var petition = new Petition(rp.attributes);
             petition.currentRoadNames = exports.currentRoadNameList.reduce(function (roadNames, rN) {
-                if (rN.attributes.Petition_Number == petition.petitionNumber) {
+                if (rN.attributes.Petition_Number === petition.petitionNumber) {
                     var roadName = rN.attributes["Current_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
                     roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/ LANE$/, " LN").replace(/\.$/, "");
                     roadNames.push(roadName);
@@ -172,7 +185,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 return roadNames;
             }, []).sort();
             petition.originalRoadNames = exports.originalRoadNameList.reduce(function (roadNames, rN) {
-                if (rN.attributes.Petition_Number == petition.petitionNumber) {
+                if (rN.attributes.Petition_Number === petition.petitionNumber) {
                     var roadName = rN.attributes["Original_Road_Name"].split(" ").join(" ").trim(" ").toUpperCase();
                     roadName = roadName.replace(/ ROAD$/, " RD").replace(/ AVENUE$/, " AVE").replace(/ TRAIL$/, " TRL").replace(/ LANE$/, " LN").replace(/\.$/, "");
                     roadNames.push(roadName);
@@ -180,7 +193,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 return roadNames;
             }, []).sort();
             petition.legalDescriptions = legalDescriptionList.reduce(function (sections, lD) {
-                if (lD.attributes.Petition_Number == petition.petitionNumber) {
+                if (lD.attributes.Petition_Number === petition.petitionNumber) {
                     var section = {
                         s: lD.attributes.Section,
                         t: lD.attributes.Township.toUpperCase(),
@@ -190,19 +203,19 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 }
                 return sections;
             }, []).sort(function (a, b) {
-                if (a.t != b.t) {
+                if (a.t !== b.t) {
                     return (a.t < b.t) ? -1 : 1;
                 }
-                else if (a.r != b.r) {
+                else if (a.r !== b.r) {
                     return (a.r < b.r) ? -1 : 1;
                 }
-                else if (a.s != b.s) {
+                else if (a.s !== b.s) {
                     return (a.s < b.s) ? -1 : 1;
                 }
                 return 0;
             });
             petition.commissionMinutes = commissionMinutesList.reduce(function (minutes, cM) {
-                if (cM.attributes.Petition_Number == petition.petitionNumber) {
+                if (cM.attributes.Petition_Number === petition.petitionNumber) {
                     var minute = {
                         book: cM.attributes.Book,
                         page: cM.attributes.Page
@@ -211,10 +224,10 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 }
                 return minutes;
             }, []).sort(function (a, b) {
-                if (a.book != b.book) {
+                if (a.book !== b.book) {
                     return (a.book < b.book) ? -1 : 1;
                 }
-                else if (a.page != a.page) {
+                else if (a.page !== a.page) {
                     return (a.page < b.page) ? -1 : 1;
                 }
                 return 0;
@@ -222,7 +235,6 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
             exports.petitions[petition.petitionNumber] = petition;
         });
     }
-    ;
     function processRoadNames() {
         var roadTypes = exports.currentRoadNameList.map(function (f) {
             var roadNameSplit = f.attributes["Current_Road_Name"].trim().toUpperCase().split(" ");
@@ -262,7 +274,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                             distance: 5 * main_1.view.resolution,
                             spatialRelationship: "intersects",
                             returnGeometry: true,
-                            outFields: ["*"],
+                            outFields: ["*"]
                         });
                         return [4 /*yield*/, promiseUtils.eachAlways([exports.roadsFL.queryFeatures(query), sectionsFL.queryFeatures(query)]).then(function (results) {
                                 var roadResults = results[0].value.features;
@@ -323,13 +335,12 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
     function makePopupContent(params) {
         var title = params.title;
         var roadPetitions = params.roadPetitions;
-        var accordion = document.createElement('calcite-accordion');
+        var accordion = document.createElement("calcite-accordion");
         Object.assign(accordion, { scale: "s", selectionMode: "single", iconPosition: "start" });
         roadPetitions.forEach(function (rP) {
-            var accordionItem = document.createElement('calcite-accordion-item');
-            accordionItem.itemTitle = "Petition # " + rP.petitionNumber;
+            rP.accordionItem = document.createElement("calcite-accordion-item");
+            rP.accordionItem.itemTitle = "Petition #" + rP.petitionNumber;
             //const rPTemplate = document.createElement('template');
-            var parser = new DOMParser();
             var rPFragment = document.createRange().createContextualFragment("\n      <span><strong>Petition #&nbsp;:</strong> " + rP.petitionNumber + "</span>\n      <span><strong>Type:</strong> " + rP.type + "</span>\n      <span><strong>Date Filed:</strong> " + rP.dateFiled + "</span>\n      <span><strong>Original Road Name(s):</strong></span>\n      <table name=\"original-road\">\n      <tbody>\n      </tbody>\n      </table>\n      <span><strong>Current Road Name(s)</strong></span>\n      <table name=\"current-road\">\n      <tbody>      \n      </tbody>\n      </table>      \n      <span><strong>Action Taken:</strong> " + rP.actionTaken + "</span>\n      <span><strong>Resolution #:</strong> " + rP.resolutionNumber + "</span>\n      <span><strong>Notes:</strong> " + rP.notes + "</span>\n      <span><strong>Commission Minutes:</strong></span>\n      <table name=\"commission-minutes\">\n      <tbody>\n      </tbody>\n      </table>\n      <span><strong>Legal Description:</strong></span>\n      <table name=\"legal-description\">\n      <tbody>\n      <tr>\n      <td>Section</td>\n      <td>Township</td>\n      <td>Range</td>\n      </tr>\n      </tbody>\n      </table>\n      <span><strong>Petition Images:</strong> " + rP.petitionImages + "</span>\n      <span><strong>Other Petition Images:</strong> " + rP.otherPetitionImages + "</span>");
             Array.from(rPFragment.children).forEach(function (e) {
                 if (e.tagName === "SPAN") {
@@ -337,7 +348,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 }
                 else if (e.tagName === "TABLE") {
                     e.classList.add("road-petition-table");
-                    switch (e.getAttribute('name')) {
+                    switch (e.getAttribute("name")) {
                         case "original-road":
                             if (!rP.originalRoadNames.length) {
                                 var row = e.insertRow();
@@ -378,16 +389,25 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                                 });
                                 row.addEventListener("mouseleave", function () {
                                     row.classList.remove("blue-row");
-                                    main_1.view.graphics.removeAll();
+                                    sectionUtils_1.removeSectionHighlightGraphic();
                                 });
                                 //row.innerText = lD.s + "     " + lD.t + "     "+ lD.r;
                             });
                             break;
                     }
                 }
-                accordionItem.appendChild(e);
+                rP.accordionItem.appendChild(e);
             });
-            accordion.appendChild(accordionItem);
+            rP.accordionItem.addEventListener("calciteAccordionItemSelected", function (e) {
+                for (var _i = 0, _a = accordion.children; _i < _a.length; _i++) {
+                    var item = _a[_i];
+                    if (item !== rP.accordionItem) {
+                        item.active = false;
+                    }
+                }
+                rP.accordionItem.active ? main_1.view.graphics.removeAll() : highlightRoads(rP);
+            });
+            accordion.appendChild(rP.accordionItem);
         });
         return { title: title, content: accordion };
     }
@@ -419,6 +439,20 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
     }
     function legalDescriptionHover(lD) {
         sectionUtils_1.displaySection({ s: lD.s, t: Number(lD.t.slice(0, -1)), ns: lD.t.split("").pop(), r: Number(lD.r.slice(0, -1)), ew: lD.r.split("").pop() });
+    }
+    function highlightRoads(rP) {
+        main_1.view.graphics.removeAll();
+        var sections = geometryEngine.union(sectionUtils_1.getSectionGeoms(rP.legalDescriptions));
+        var roads = roadUtils_1.getRoads(rP.currentRoadNames.concat(rP.originalRoadNames));
+        var intersections = geometryEngine.intersect(roads.map(function (r) { return r.geometry; }), sections);
+        intersections.map(function (intersection) {
+            intersection && main_1.view.graphics.add(new Graphic({
+                geometry: intersection,
+                symbol: intersection.type === "polyline" ?
+                    { type: "simple-line", width: 2.5, color: [32, 174, 50, 1] } :
+                    { type: "simple-marker", color: [32, 174, 50, 1] }
+            }));
+        });
     }
 });
 //# sourceMappingURL=roadPetitions.js.map

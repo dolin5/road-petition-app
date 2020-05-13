@@ -8,7 +8,7 @@ import MapImageLayer from "esri/layers/MapImageLayer";
 import FeatureLayer from "esri/layers/FeatureLayer";
 import * as watchUtils from "esri/core/watchUtils";
 import { populatePopup, makeFeatureLayers } from "./utils/roadPetitions";
-import {makeSearchWidget} from "./utils/search";
+import { makeSearchWidget } from "./utils/search";
 import esri = __esri;
 
 const basemap = new Basemap({
@@ -27,29 +27,29 @@ const basemap = new Basemap({
 });
 
 const townshipsLayer = new FeatureLayer({
-  url:"https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/2"
-})
+  url: "https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/2"
+});
 
 const sectionsLayer = new FeatureLayer({
-  url:"https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/3"
-})
+  url: "https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver/3"
+});
 
 const roadsVTLayer = new VectorTileLayer({
-  portalItem:{
-    id:"107474a0debf4232a68c93690eaf3e84"
+  portalItem: {
+    id: "107474a0debf4232a68c93690eaf3e84"
   }
-})
+});
 
 export const gcLayer = new MapImageLayer({
   url: "https://gis.gallatin.mt.gov/arcgis/rest/services/MapServices/RoadPetition/Mapserver",
-  opacity:0
+  opacity: 0
 });
 
 gcLayer.when(makeFeatureLayers);
 
 const map = new EsriMap({
   basemap,
-  layers: [gcLayer,sectionsLayer,townshipsLayer,roadsVTLayer]
+  layers: [gcLayer, sectionsLayer, townshipsLayer, roadsVTLayer]
 });
 
 export const view = new MapView({
@@ -57,11 +57,11 @@ export const view = new MapView({
   container: "viewDiv",
   center: [-111.244, 45.752], 
   zoom: 10,
-  constraints:{
-    rotationEnabled:false
+  constraints: {
+    rotationEnabled: false
   },
-  padding:{
-    top:50
+  padding: {
+    top: 50
   },
   popup: {
     actions: [],
