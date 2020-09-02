@@ -396,14 +396,17 @@ export function makePopupContent(params) {
       }   
       rP.accordionItem.appendChild(e);
     });
-    rP.accordionItem.addEventListener("calciteAccordionItemSelected", (e) => {
-      view.goTo(getSectionGeoms(rP.legalDescriptions));
+    rP.accordionItem.addEventListener("calciteAccordionItemSelected", (e) => {      
       for (let item of accordion.children){
         if (item !== rP.accordionItem){
           item.active = false
         } 
       }
-      rP.accordionItem.active ? view.graphics.removeAll(): highlightRoads(rP);
+      if (rP.accordionItem.active){
+        view.graphics.removeAll();
+      } else {  highlightRoads(rP);
+        view.goTo(getSectionGeoms(rP.legalDescriptions));
+      }
     }); 
     accordion.appendChild(rP.accordionItem);
   });

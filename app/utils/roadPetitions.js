@@ -386,14 +386,19 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 rP.accordionItem.appendChild(e);
             });
             rP.accordionItem.addEventListener("calciteAccordionItemSelected", function (e) {
-                main_1.view.goTo(sectionUtils_1.getSectionGeoms(rP.legalDescriptions));
                 for (var _i = 0, _a = accordion.children; _i < _a.length; _i++) {
                     var item = _a[_i];
                     if (item !== rP.accordionItem) {
                         item.active = false;
                     }
                 }
-                rP.accordionItem.active ? main_1.view.graphics.removeAll() : highlightRoads(rP);
+                if (rP.accordionItem.active) {
+                    main_1.view.graphics.removeAll();
+                }
+                else {
+                    highlightRoads(rP);
+                    main_1.view.goTo(sectionUtils_1.getSectionGeoms(rP.legalDescriptions));
+                }
             });
             accordion.appendChild(rP.accordionItem);
         });
