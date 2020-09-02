@@ -38,7 +38,7 @@ define(["require", "exports", "esri/widgets/Search", "esri/widgets/Search/Search
             locationEnabled: false,
             includeDefaultSources: false
         });
-        view.ui.add(searchWidget, "top-left");
+        view.ui.add(searchWidget, "top-right");
     }
     exports.makeSearchWidget = makeSearchWidget;
     function getSuggestionsByNumber(params) {

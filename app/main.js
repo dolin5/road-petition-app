@@ -60,8 +60,9 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/Basemap", 
             actions: [],
             dockEnabled: true,
             dockOptions: {
-                buttonEnabled: true,
-                breakpoint: false
+                buttonEnabled: false,
+                breakpoint: false,
+                position: 'top-right'
             }
         }
     });

@@ -32,7 +32,7 @@ export function makeSearchWidget(view) {
     locationEnabled:false,
     includeDefaultSources: false 
   });
-  view.ui.add(searchWidget, "top-left");  
+  view.ui.add(searchWidget, "top-right");  
 }
 
 

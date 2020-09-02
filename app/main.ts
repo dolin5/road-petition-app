@@ -67,8 +67,9 @@ export const view = new MapView({
     actions: [],
     dockEnabled: true,
     dockOptions: {
-      buttonEnabled: true,
-      breakpoint: false
+      buttonEnabled: false,
+      breakpoint: false,
+      position:'top-right'
     }
   }
 });
