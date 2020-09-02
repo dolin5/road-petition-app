@@ -1,29 +1,16 @@
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
     return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 define(["require", "exports", "esri/widgets/Search", "esri/widgets/Search/SearchSource", "esri/core/promiseUtils", "./roadPetitions"], function (require, exports, Search_1, SearchSource_1, promiseUtils, roadPetitions_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.makeSearchWidget = void 0;
     Search_1 = __importDefault(Search_1);
     SearchSource_1 = __importDefault(SearchSource_1);
     promiseUtils = __importStar(promiseUtils);
@@ -47,6 +34,8 @@ define(["require", "exports", "esri/widgets/Search", "esri/widgets/Search/Search
             view: view,
             searchAllEnabled: true,
             sources: [petitionsByRoadName, petitionsByNumber],
+            allPlaceholder: 'road name or petition number',
+            locationEnabled: false,
             includeDefaultSources: false
         });
         view.ui.add(searchWidget, "top-left");

@@ -28,6 +28,8 @@ export function makeSearchWidget(view) {
     view,
     searchAllEnabled: true,
     sources: [petitionsByRoadName, petitionsByNumber],
+    allPlaceholder:'road name or petition number',
+    locationEnabled:false,
     includeDefaultSources: false 
   });
   view.ui.add(searchWidget, "top-left");  
