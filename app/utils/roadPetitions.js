@@ -399,6 +399,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
                 rP.accordionItem.appendChild(e);
             });
             rP.accordionItem.addEventListener("calciteAccordionItemSelected", function (e) {
+                main_1.view.goTo(sectionUtils_1.getSectionGeoms(rP.legalDescriptions));
                 for (var _i = 0, _a = accordion.children; _i < _a.length; _i++) {
                     var item = _a[_i];
                     if (item !== rP.accordionItem) {
@@ -449,7 +450,7 @@ define(["require", "exports", "../main", "esri/tasks/QueryTask", "esri/tasks/sup
             intersection && main_1.view.graphics.add(new Graphic({
                 geometry: intersection,
                 symbol: intersection.type === "polyline" ?
-                    { type: "simple-line", width: 2.5, color: [32, 174, 50, 1] } :
+                    { type: "simple-line", width: 2.5, color: [255, 66, 66, 1] } :
                     { type: "simple-marker", color: [32, 174, 50, 1] }
             }));
         });

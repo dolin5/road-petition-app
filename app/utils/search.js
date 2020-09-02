@@ -45,7 +45,7 @@ define(["require", "exports", "esri/widgets/Search", "esri/widgets/Search/Search
     function makeSearchWidget(view) {
         searchWidget = new Search_1.default({
             view: view,
-            searchAllEnabled: false,
+            searchAllEnabled: true,
             sources: [petitionsByRoadName, petitionsByNumber],
             includeDefaultSources: false
         });

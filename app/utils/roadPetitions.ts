@@ -397,6 +397,7 @@ export function makePopupContent(params) {
       rP.accordionItem.appendChild(e);
     });
     rP.accordionItem.addEventListener("calciteAccordionItemSelected", (e) => {
+      view.goTo(getSectionGeoms(rP.legalDescriptions));
       for (let item of accordion.children){
         if (item !== rP.accordionItem){
           item.active = false
@@ -452,7 +453,7 @@ function highlightRoads(rP:Petition){
     intersection && view.graphics.add(new Graphic({
       geometry:intersection,
       symbol: intersection.type === "polyline" ?
-       { type: "simple-line", width: 2.5, color: [32, 174, 50, 1] } : 
+       { type: "simple-line", width: 2.5, color: [255, 66,66, 1] } : 
        { type: "simple-marker", color: [32, 174, 50, 1] }
     }));
   })

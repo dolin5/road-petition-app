@@ -26,7 +26,7 @@ const petitionsByRoadName = new SearchSource({
 export function makeSearchWidget(view) {
   searchWidget = new SearchWidget({
     view,
-    searchAllEnabled: false,
+    searchAllEnabled: true,
     sources: [petitionsByRoadName, petitionsByNumber],
     includeDefaultSources: false 
   });
