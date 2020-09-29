@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/Basemap", "esri/layers/VectorTileLayer", "esri/layers/TileLayer", "esri/layers/MapImageLayer", "esri/layers/FeatureLayer", "./utils/roadPetitions", "./utils/search"], function (require, exports, Map_1, MapView_1, Basemap_1, VectorTileLayer_1, TileLayer_1, MapImageLayer_1, FeatureLayer_1, roadPetitions_1, search_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.view = exports.gcLayer = void 0;
     Map_1 = __importDefault(Map_1);
     MapView_1 = __importDefault(MapView_1);
     Basemap_1 = __importDefault(Basemap_1);

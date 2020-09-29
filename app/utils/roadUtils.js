@@ -1,6 +1,7 @@
 define(["require", "exports", "../main"], function (require, exports, main_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.getRoads = exports.getRoadGraphics = void 0;
     var roadGraphics;
     function getRoadGraphics(fl) {
         var outFields = ['DIRPRE', 'ROADNAME', 'ROADTYPE', 'DIRSUF'];
